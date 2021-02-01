@@ -67,7 +67,6 @@ echo "Waiting for pods to become available"
 check_pods(){
   pods_ready "test-app-summon-init" &&
   pods_ready "test-app-with-host-outside-apps-branch-summon-init" &&
-  pods_ready "test-app-summon-sidecar" &&
   pods_ready "test-app-secretless"
 }
 bl_retry_constant "${RETRIES}" "${RETRY_WAIT}"  check_pods
@@ -78,7 +77,6 @@ if [[ "$PLATFORM" == "openshift" ]]; then
   check_deployment_status(){
     [[ "$(deployment_status "test-app-summon-init")" == "Complete" ]] &&
     [[ "$(deployment_status "test-app-with-host-outside-apps-branch-summon-init")" == "Complete" ]] &&
-    [[ "$(deployment_status "test-app-summon-sidecar")" == "Complete" ]] &&
     [[ "$(deployment_status "test-app-secretless")" == "Complete" ]]
   }
   bl_retry_constant "${RETRIES}" "${RETRY_WAIT}"  check_deployment_status
@@ -109,7 +107,6 @@ else
     check_services(){
       [[ -n "$(external_ip "test-app-summon-init")" ]] &&
       [[ -n "$(external_ip "test-app-with-host-outside-apps-branch-summon-init")" ]] &&
-      [[ -n "$(external_ip "test-app-summon-sidecar")" ]] &&
       [[ -n "$(external_ip "test-app-secretless")" ]]
     }
     bl_retry_constant "${RETRIES}" "${RETRY_WAIT}"  check_services
@@ -156,11 +153,11 @@ $curl_cmd \
   -H "Content-Type: application/json" \
   "$init_url_with_host_outside_apps"/pet
 
-echo -e "Adding entry to the sidecar app\n"
-$curl_cmd \
-  -d '{"name": "Mr. Sidecar"}' \
-  -H "Content-Type: application/json" \
-  "$sidecar_url"/pet
+#echo -e "Adding entry to the sidecar app\n"
+#$curl_cmd \
+#  -d '{"name": "Mr. Sidecar"}' \
+#  -H "Content-Type: application/json" \
+#  "$sidecar_url"/pet
 
 echo -e "Adding entry to the secretless app\n"
 $curl_cmd \
@@ -174,8 +171,8 @@ $curl_cmd "$init_url"/pets
 echo -e "\n\nQuerying init app with hosts outside apps\n"
 $curl_cmd "$init_url_with_host_outside_apps"/pets
 
-echo -e "\n\nQuerying sidecar app\n"
-$curl_cmd "$sidecar_url"/pets
+#echo -e "\n\nQuerying sidecar app\n"
+#$curl_cmd "$sidecar_url"/pets
 
 echo -e "\n\nQuerying secretless app\n"
 $curl_cmd "$secretless_url"/pets

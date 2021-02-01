@@ -36,9 +36,18 @@ spec:
     spec:
       serviceAccountName: test-app-summon-sidecar
       containers:
-      - image: {{ TEST_APP_DOCKER_IMAGE }}
+      - image: alpine:latest
         imagePullPolicy: {{ IMAGE_PULL_POLICY }}
         name: test-app
+        command: ["sh", "-c", "while true; do for i in `ls /conjur`; do echo $i: $(cat /conjur/$i); done; echo '============'; sleep 2; done"]
+        volumeMounts:
+          - mountPath: /conjur
+            name: conjur-secrets
+            readOnly: true
+      - image: {{ TEST_APP_DOCKER_IMAGE }}
+        imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+        name: secret-injector
+        command: ["/app/inject_secrets_files.sh"]
         ports:
         - name: http
           containerPort: 8080
@@ -64,6 +73,8 @@ spec:
           - mountPath: /run/conjur
             name: conjur-access-token
             readOnly: true
+          - mountPath: /conjur
+            name: conjur-secrets
       - image: {{ AUTHENTICATOR_CLIENT_IMAGE }}
         imagePullPolicy: Always
         name: authenticator
@@ -100,5 +111,8 @@ spec:
         - name: dockerpullsecret
       volumes:
         - name: conjur-access-token
+          emptyDir:
+            medium: Memory
+        - name: conjur-secrets
           emptyDir:
             medium: Memory
