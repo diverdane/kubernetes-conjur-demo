@@ -28,5 +28,10 @@ COPY --from=test-app-builder /usr/local/bin/summon /usr/local/bin/summon
 #---copy secrets.yml into image---#
 COPY tmp.$namespace.secrets.yml /etc/secrets.yml
 
+#---copy secrets files scripts into image---#
+COPY summon_file_inject.sh \
+     read_secrets_and_run_app.sh \
+     /app/
+
 #---override entrypoint to wrap command with summon---#
 ENTRYPOINT [ "summon", "--provider", "summon-conjur", "-f", "/etc/secrets.yml", "java", "-jar", "/app.jar"]

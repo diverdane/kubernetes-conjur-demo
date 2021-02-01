@@ -39,6 +39,24 @@ spec:
       - image: {{ TEST_APP_DOCKER_IMAGE }}
         imagePullPolicy: {{ IMAGE_PULL_POLICY }}
         name: test-app
+        command: ["/app/read_secrets_and_run_app.sh"]
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /pets
+            port: http
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+          - mountPath: /conjur
+            name: conjur-secrets
+            readOnly: true
+      - image: {{ TEST_APP_DOCKER_IMAGE }}
+        imagePullPolicy: {{ IMAGE_PULL_POLICY }}
+        name: secret-injector
+        command: ["/app/summon_file_inject.sh"]
         ports:
         - name: http
           containerPort: 8080
@@ -64,6 +82,8 @@ spec:
           - mountPath: /run/conjur
             name: conjur-access-token
             readOnly: true
+          - mountPath: /conjur
+            name: conjur-secrets
       - image: {{ AUTHENTICATOR_CLIENT_IMAGE }}
         imagePullPolicy: Always
         name: authenticator
@@ -100,5 +120,8 @@ spec:
         - name: dockerpullsecret
       volumes:
         - name: conjur-access-token
+          emptyDir:
+            medium: Memory
+        - name: conjur-secrets
           emptyDir:
             medium: Memory
