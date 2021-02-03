@@ -58,6 +58,8 @@ function main() {
   announce 'Checking arguments'
   checkArguments
 
+  display_test_note
+
   announce 'Preparing test environment'
   prepareTestEnvironment
 
@@ -110,6 +112,13 @@ function prepareTestEnvironment() {
     .
 }
 
+function display_test_note() {
+  test_note="${TEST_NOTE:-""}"
+  if [ -n "$test_note" ]; then
+    announce "$test_note"
+  fi
+}
+
 # Delete an image from GCR, unless it is has multiple tags pointing to it
 # This means another parallel build is using the image and we should
 # just untag it to be deleted by the later job
@@ -160,6 +169,8 @@ function runDockerCommand() {
     -e OSHIFT_CONJUR_ADMIN_USERNAME \
     -e OSHIFT_CLUSTER_ADMIN_USERNAME \
     -e CONJUR_LOG_LEVEL \
+    -e DEPLOY_CONJUR_LOADBALANCER \
+    -e TEST_APP_LOADBALANCER_SVCS \
     -v $GCLOUD_SERVICE_KEY:/tmp$GCLOUD_SERVICE_KEY \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v ~/.config:/root/.config \
@@ -177,7 +188,7 @@ function announce() {
   echo ""
   echo "$@"
   echo ""
-  echo "++++++++++++++++++++++++++++++++++++++"
+ echo "++++++++++++++++++++++++++++++++++++++"
 }
 
 # Check that the argument values are valid
