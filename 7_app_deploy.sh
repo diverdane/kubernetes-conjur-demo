@@ -22,6 +22,7 @@ main() {
   deploy_secretless_app
   deploy_sidecar_app
   deploy_init_container_app
+  deploy_secrets_provider_init_app
   deploy_init_container_app_with_host_outside_apps
 }
 
@@ -55,6 +56,7 @@ init_registry_creds() {
 ###########################
 init_connection_specs() {
   test_sidecar_app_docker_image=$(platform_image_for_pull test-sidecar-app)
+  test_secrets_provider_init_app_docker_image=$(platform_image_for_pull test-secrets-provider-init-app)
   test_init_app_docker_image=$(platform_image_for_pull test-init-app)
 
   if [[ "$LOCAL_AUTHENTICATOR" == "true" ]]; then
@@ -166,6 +168,45 @@ deploy_sidecar_app() {
   fi
 
   echo "Test app/sidecar deployed."
+}
+
+###########################
+deploy_secrets_provider_init_app() {
+  $cli delete --ignore-not-found \
+    secret/test-k8s-secret \
+    deployment/test-app-secrets-provider-init \
+    service/test-app-secrets-provider-init \
+    serviceaccount/test-app-secrets-provider-init \
+    serviceaccount/oc-test-app-secrets-provider-init
+
+  if [[ "$PLATFORM" == "openshift" ]]; then
+    oc delete --ignore-not-found \
+      deploymentconfig/test-app-secrets-provider-init \
+      route/test-app-secrets-provider-init
+  fi
+
+  sleep 5
+
+  $cli create -f ./"$PLATFORM"/test-app-secrets-provider-secret.yml
+
+  sed "s#{{ TEST_APP_DOCKER_IMAGE }}#$test_sidecar_app_docker_image#g" ./$PLATFORM/test-app-secrets-provider-init.yml |
+    sed "s#{{ AUTHENTICATOR_CLIENT_IMAGE }}#$authenticator_client_image#g" |
+    sed "s#{{ IMAGE_PULL_POLICY }}#$IMAGE_PULL_POLICY#g" |
+    sed "s#{{ CONJUR_ACCOUNT }}#$CONJUR_ACCOUNT#g" |
+    sed "s#{{ CONJUR_AUTHN_LOGIN_PREFIX }}#$conjur_authn_login_prefix#g" |
+    sed "s#{{ CONJUR_APPLIANCE_URL }}#$conjur_appliance_url#g" |
+    sed "s#{{ CONJUR_AUTHN_URL }}#$conjur_authenticator_url#g" |
+    sed "s#{{ TEST_APP_NAMESPACE_NAME }}#$TEST_APP_NAMESPACE_NAME#g" |
+    sed "s#{{ AUTHENTICATOR_ID }}#$AUTHENTICATOR_ID#g" |
+    sed "s#{{ CONFIG_MAP_NAME }}#$TEST_APP_NAMESPACE_NAME#g" |
+    sed "s#{{ SERVICE_TYPE }}#$(app_service_type)#g" |
+    $cli create -f -
+
+  if [[ "$PLATFORM" == "openshift" ]]; then
+    oc expose service test-app-secrets-provider-init
+  fi
+
+  echo "Test app/secrets provider init deployed."
 }
 
 ###########################

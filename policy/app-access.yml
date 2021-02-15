@@ -50,3 +50,20 @@
       role: !layer /test-app
       privileges: [ read, execute ]
       resources: *secretless-variables
+
+- !policy
+  id: test-secrets-provider-init-app-db
+  owner: !group secrets_admin
+  annotations:
+    description: This policy contains the creds to access the secrets provider init app DB
+
+  body:
+    - &secrets-provider-variables
+      - !variable password
+      - !variable url
+      - !variable username
+
+    - !permit
+      role: !layer /test-app
+      privileges: [ read, execute ]
+      resources: *secrets-provider-variables

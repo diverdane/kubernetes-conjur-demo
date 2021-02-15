@@ -68,6 +68,7 @@ check_pods(){
   pods_ready "test-app-summon-init" &&
   pods_ready "test-app-with-host-outside-apps-branch-summon-init" &&
   pods_ready "test-app-summon-sidecar" &&
+  pods_ready "test-app-secrets-provider-init" &&
   pods_ready "test-app-secretless"
 }
 bl_retry_constant "${RETRIES}" "${RETRY_WAIT}"  check_pods
@@ -79,11 +80,13 @@ if [[ "$PLATFORM" == "openshift" ]]; then
     [[ "$(deployment_status "test-app-summon-init")" == "Complete" ]] &&
     [[ "$(deployment_status "test-app-with-host-outside-apps-branch-summon-init")" == "Complete" ]] &&
     [[ "$(deployment_status "test-app-summon-sidecar")" == "Complete" ]] &&
+    [[ "$(deployment_status "test-app-secrets-provider-init")" == "Complete" ]] &&
     [[ "$(deployment_status "test-app-secretless")" == "Complete" ]]
   }
   bl_retry_constant "${RETRIES}" "${RETRY_WAIT}"  check_deployment_status
 
   sidecar_pod=$(get_pod_name test-app-summon-sidecar)
+  secrets_provider_pod=$(get_pod_name test-app-secrets-provider-init)
   init_pod=$(get_pod_name test-app-summon-init)
   init_pod_with_host_outside_apps=$(get_pod_name test-app-with-host-outside-apps-branch-summon-init)
   secretless_pod=$(get_pod_name test-app-secretless)
